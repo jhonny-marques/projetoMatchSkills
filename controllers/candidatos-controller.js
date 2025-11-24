@@ -117,6 +117,42 @@ class CandidatosController {
         }
     }
 
+    static async buscar_informacoes_do_candidato(req, res) {
+        const { id } = req.params;
+        try {
+            const candidatoInfo = await Candidato.buscar_informacoes_do_candidato(id);
+
+            if (candidatoInfo && candidatoInfo.length > 0) {
+                res.status(200).json(candidatoInfo[0]);
+            } else {
+                res.status(404).json({ message: 'Informações do candidato não encontradas.' });
+            }
+        } catch (error) {
+            console.error('Erro ao buscar informações do candidato:', error);
+            res.status(500).json({ error: 'Erro interno no servidor ao buscar as informações do candidato.' });
+        }
+    }
+
+    static async criar_candidatura(req, res) {
+        const { id_vaga, id_candidato } = req.body;
+
+        if (!id_vaga || !id_candidato) {
+            return res.status(400).json({ error: 'ID da vaga e ID do candidato são obrigatórios.' });
+        }
+
+        try {
+            const result = await Candidato.criar_candidatura(id_vaga, id_candidato);
+            // The result from a procedure call includes metadata. affectedRows is what we need.
+            if (result && result.affectedRows > 0) {
+                res.status(201).json({ message: 'Candidatura feita com sucesso.' });
+            } else {
+                res.status(409).json({ message: 'Você já se candidatou para esta vaga.' });
+            }
+        } catch (error) {
+            res.status(500).json({ message: 'Erro interno no servidor ao criar a candidatura.' });
+        }
+    }
+
 }
 
 module.exports = CandidatosController;

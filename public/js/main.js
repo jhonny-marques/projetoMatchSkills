@@ -91,13 +91,24 @@ document.addEventListener("DOMContentLoaded", () => {
         function showSuggestions(filter) {
             suggestions.innerHTML = "";
 
-            // Get IDs of already selected skills to exclude them from suggestions
-            const selectedSkillIds = new Set(
+            // Get IDs of skills selected in the CURRENT container
+            const ownSelectedSkillIds = new Set(
                 Array.from(selectedSkills.children).map(pill => pill.getAttribute('data-skill-id'))
             );
 
+            // Get IDs of skills selected in OTHER containers on the same page
+            const otherSelectedSkillIds = new Set();
+            multiSelectContainers.forEach(otherContainer => {
+                if (otherContainer !== container) {
+                    const otherSelected = otherContainer.querySelector('.selected-skills');
+                    Array.from(otherSelected.children).forEach(pill => {
+                        otherSelectedSkillIds.add(pill.getAttribute('data-skill-id'));
+                    });
+                }
+            });
+
             const filteredSkills = allSkills.filter(skill => {
-                const isSelected = selectedSkillIds.has(String(skill.id_habilidade));
+                const isSelected = ownSelectedSkillIds.has(String(skill.id_habilidade)) || otherSelectedSkillIds.has(String(skill.id_habilidade));
                 const nameMatches = skill.nome.toLowerCase().includes(filter.toLowerCase());
                 return !isSelected && nameMatches;
             });
@@ -232,6 +243,44 @@ document.addEventListener("DOMContentLoaded", () => {
         notification.querySelector('.notification-close').addEventListener('click', () => {
             clearTimeout(timer); // Cancela o timer se fechar manualmente
             removeNotification();
+        });
+    }
+
+    // --- Controle do Diálogo de Confirmação ---
+    const confirmationDialog = document.getElementById('confirmationDialog');
+    const confirmationBackdrop = document.getElementById('confirmationBackdrop');
+
+    window.showConfirmationDialog = (message) => {
+        // Retorna uma Promise que resolve para true (confirmar) ou false (cancelar)
+        return new Promise((resolve) => {
+            if (!confirmationDialog || !confirmationBackdrop) {
+                resolve(false); // Se os elementos não existirem, cancela a ação.
+                return;
+            }
+
+            // Elementos do diálogo
+            const messageElement = confirmationDialog.querySelector('.confirmation-message');
+            const confirmBtn = confirmationDialog.querySelector('.btn-confirm');
+            const cancelBtn = confirmationDialog.querySelector('.btn-cancel');
+
+            // Define a mensagem
+            messageElement.textContent = message;
+
+            // Mostra o diálogo e o backdrop
+            confirmationBackdrop.classList.add('show');
+            confirmationDialog.classList.add('show');
+
+            // Função para fechar e resolver a promise
+            const close = (result) => {
+                confirmationBackdrop.classList.remove('show');
+                confirmationDialog.classList.remove('show');
+                resolve(result);
+            };
+
+            // Adiciona listeners que só rodam uma vez
+            confirmBtn.addEventListener('click', () => close(true), { once: true });
+            cancelBtn.addEventListener('click', () => close(false), { once: true });
+            confirmationBackdrop.addEventListener('click', () => close(false), { once: true });
         });
     }
 });

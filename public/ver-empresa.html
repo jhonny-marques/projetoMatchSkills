@@ -138,12 +138,27 @@
             </ul>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-primary">Quero me candidatar!</button>
+            <button class="btn btn-primary" id="apply-button">Quero me candidatar!</button>
         </div>
     </div>
 
+    <div id="notification-container"></div>
+    <div class="confirmation-backdrop" id="confirmationBackdrop"></div>
+    <div class="confirmation-dialog" id="confirmationDialog">
+        <p class="confirmation-message">Você tem certeza?</p>
+        <div class="confirmation-buttons">
+            <button class="btn btn-secondary btn-cancel">Cancelar</button>
+            <button class="btn btn-danger btn-confirm">Confirmar</button>
+        </div>
+    </div>
+    
     <script src="js/main.js"></script>
     <script>
+        // This should be replaced by actual session/auth logic
+        const usuario = {
+            id: 3
+        };
+
         document.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const id = urlParams.get('id');
@@ -230,6 +245,55 @@
                 console.error('Erro ao carregar dados da empresa:', error);
             }
         }
+
+        // Function to close modal
+        function closeModal() {
+            const modal = document.getElementById('modalVagaDetalhes');
+            const backdrop = document.getElementById('modalBackdrop');
+            modal.classList.remove('show');
+            backdrop.classList.remove('show');
+        }
+        
+        // Applying Logic
+        const applyButton = document.getElementById('apply-button');
+        let currentVagaId;
+
+        // Store the vaga ID when the modal is opened
+        const originalOpenModalVaga = window.openModalVaga;
+        window.openModalVaga = (id_vaga) => {
+            currentVagaId = id_vaga;
+            originalOpenModalVaga(id_vaga);
+        };
+
+        applyButton.addEventListener('click', async () => {
+            if (!currentVagaId || !usuario || !usuario.id) {
+                window.showNotification('Não foi possível identificar a vaga ou o usuário.', 'error');
+                return;
+            }
+
+            const confirmed = await window.showConfirmationDialog('Deseja confirmar sua candidatura para esta vaga?');
+
+            if (!confirmed) {
+                window.showNotification('Ação cancelada.', 'error');
+                return;
+            }
+            try {
+                const response = await fetch('/api/candidatos/candidatura', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_vaga: currentVagaId, id_candidato: usuario.id })
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    window.showNotification(result.message || 'Erro ao enviar candidatura.', 'error');
+                    return;
+                }
+                window.showNotification(result.message || 'Candidatura feita com sucesso!');
+                closeModal();
+            } catch (error) {
+                window.showNotification('Ocorreu um erro ao enviar sua candidatura.', 'error');
+            }
+        });
     });
 
     async function openModalVaga(id_vaga) {

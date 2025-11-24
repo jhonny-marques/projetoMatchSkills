@@ -97,6 +97,7 @@ CREATE PROCEDURE criar_vaga(
 BEGIN
     INSERT INTO vagas (id_empresa, titulo, descricao, localizacao, modalidade, salario, data_publicacao)
     VALUES (p_id_empresa, p_titulo, p_descricao, p_localizacao, p_modalidade, p_salario, NOW());
+    SELECT LAST_INSERT_ID() AS id_vaga;
 END //
 DELIMITER ;
 
@@ -108,8 +109,12 @@ CREATE PROCEDURE criar_candidatura(
     IN p_status ENUM('Enviado', 'Em Análise', 'Rejeitado', 'Aprovado')
 )
 BEGIN
-    INSERT INTO candidaturas (id_vaga, id_candidato, data_candidatura, status)
-    VALUES (p_id_vaga, p_id_candidato, NOW(), p_status);
+    -- Check if the candidate has already applied for this vacancy
+    IF NOT EXISTS (SELECT 1 FROM candidaturas WHERE id_vaga = p_id_vaga AND id_candidato = p_id_candidato) THEN
+        -- If not, insert the new application
+        INSERT INTO candidaturas (id_vaga, id_candidato, data_candidatura, status)
+        VALUES (p_id_vaga, p_id_candidato, NOW(), p_status);
+    END IF;
 END //
 DELIMITER ;
 
@@ -130,6 +135,21 @@ CREATE PROCEDURE buscar_empresa_por_id(
 )
 BEGIN
     SELECT e.*, u.foto, u.descricao FROM empresas e JOIN usuarios u ON e.id_empresa = u.id_usuario WHERE id_empresa = p_id;
+END //
+DELIMITER ;
+
+-- Buscar empresa completa por id
+DELIMITER //
+CREATE PROCEDURE buscar_empresa_completa_por_id(
+    IN p_id_empresa INT
+)
+BEGIN
+    SELECT 
+        e.cnpj, e.razao_social, e.site, e.setor, e.local, e.tamanho,
+        u.email, u.foto, u.descricao, u.data_criacao
+    FROM empresas e
+    JOIN usuarios u ON e.id_empresa = u.id_usuario
+    WHERE e.id_empresa = p_id_empresa;
 END //
 DELIMITER ;
 
@@ -171,16 +191,20 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE atualizar_empresa(
     IN p_id_empresa INT,
+    IN p_cnpj VARCHAR(18),
     IN p_razao_social VARCHAR(150),
     IN p_site VARCHAR(200),
     IN p_setor VARCHAR(100),
     IN p_local VARCHAR(100),
     IN p_tamanho ENUM('Pequena', 'Média', 'Grande'),
+    IN p_email VARCHAR(100),
     IN p_descricao TEXT
 )
 BEGIN
-    UPDATE empresas SET razao_social = p_razao_social, site = p_site, setor = p_setor, local = p_local, tamanho = p_tamanho WHERE id_empresa = p_id_empresa;
-    UPDATE usuarios SET descricao = p_descricao WHERE id_usuario = p_id_empresa;
+    UPDATE empresas 
+    SET cnpj = p_cnpj, razao_social = p_razao_social, site = p_site, setor = p_setor, local = p_local, tamanho = p_tamanho 
+    WHERE id_empresa = p_id_empresa;
+    UPDATE usuarios SET email = p_email, descricao = p_descricao WHERE id_usuario = p_id_empresa;
 END //
 DELIMITER ;
 
@@ -242,13 +266,16 @@ DELIMITER ;
 
 -- buscar vagas aleatorias
 DELIMITER //
-CREATE PROCEDURE buscar_vagas_aleatorias()
+CREATE PROCEDURE buscar_vagas_aleatorias(
+    IN p_id_candidato INT
+)
 BEGIN
     SELECT v.*, e.razao_social, u.foto
     FROM vagas v
     JOIN empresas e ON v.id_empresa = e.id_empresa
     JOIN usuarios u ON v.id_empresa = u.id_usuario
-    ORDER BY RAND()
+    WHERE v.id_vaga NOT IN (SELECT id_vaga FROM candidaturas WHERE id_candidato = p_id_candidato)
+    ORDER BY RAND() 
     LIMIT 10;
 END //
 DELIMITER ;
@@ -256,7 +283,8 @@ DELIMITER ;
 -- buscar vagas por habilidades
 DELIMITER //
 CREATE PROCEDURE buscar_vagas_por_habilidades(
-    IN p_habilidades VARCHAR(255)
+    IN p_habilidades VARCHAR(255),
+    IN p_id_candidato INT
 )
 BEGIN
     SELECT
@@ -269,7 +297,8 @@ BEGIN
     JOIN empresas e ON v.id_empresa = e.id_empresa
     JOIN usuarios u ON v.id_empresa = u.id_usuario
     JOIN habilidades_vagas hv ON v.id_vaga = hv.id_vaga
-    WHERE FIND_IN_SET(hv.id_habilidade, p_habilidades)
+    WHERE FIND_IN_SET(hv.id_habilidade, p_habilidades) 
+      AND v.id_vaga NOT IN (SELECT id_vaga FROM candidaturas WHERE id_candidato = p_id_candidato)
     GROUP BY v.id_vaga
     ORDER BY
         (matching_skills / total_skills) DESC,
@@ -346,5 +375,186 @@ BEGIN
 
         SET remaining_ids = SUBSTRING(remaining_ids, LENGTH(current_id_str) + 2);
     END WHILE;
+END //
+DELIMITER ;
+
+-- Deletar vaga por id
+DELIMITER //
+CREATE PROCEDURE deletar_vaga_por_id(
+    IN p_id_vaga INT
+)
+BEGIN
+    -- Deleta as candidaturas associadas à vaga
+    DELETE FROM candidaturas WHERE id_vaga = p_id_vaga;
+    -- Deleta as habilidades associadas à vaga
+    DELETE FROM habilidades_vagas WHERE id_vaga = p_id_vaga;
+    -- Deleta a vaga
+    DELETE FROM vagas WHERE id_vaga = p_id_vaga;
+END //
+DELIMITER ;
+
+-- Buscar candidatos por vaga com detalhes de habilidades
+DELIMITER //
+CREATE PROCEDURE buscar_candidatos_por_vaga(
+    IN p_id_vaga INT
+)
+BEGIN
+    SELECT 
+        u.id_usuario AS id_candidato,
+        u.nome,
+        u.foto,
+        -- Contagem de habilidades exigidas que o candidato possui
+        (SELECT COUNT(*)
+         FROM habilidades_candidatos hc
+         JOIN habilidades_vagas hv ON hc.id_habilidade = hv.id_habilidade
+         WHERE hc.id_candidato = u.id_usuario AND hv.id_vaga = p_id_vaga AND hv.obrigatoria = TRUE) AS num_habilidades_exigidas,
+
+        -- Contagem de habilidades diferenciais que o candidato possui
+        (SELECT COUNT(*)
+         FROM habilidades_candidatos hc
+         JOIN habilidades_vagas hv ON hc.id_habilidade = hv.id_habilidade
+         WHERE hc.id_candidato = u.id_usuario AND hv.id_vaga = p_id_vaga AND hv.obrigatoria = FALSE) AS num_habilidades_diferenciais,
+
+        -- Habilidades Exigidas: O candidato tem e a vaga exige como obrigatória.
+        (SELECT GROUP_CONCAT(h.nome SEPARATOR ', ')
+         FROM habilidades h
+         JOIN habilidades_candidatos hc ON h.id_habilidade = hc.id_habilidade
+         JOIN habilidades_vagas hv ON h.id_habilidade = hv.id_habilidade
+         WHERE hc.id_candidato = u.id_usuario AND hv.id_vaga = p_id_vaga AND hv.obrigatoria = TRUE) AS HabilidadesExigidas,
+
+        -- Habilidades Diferenciais: O candidato tem e a vaga lista como diferencial.
+        (SELECT GROUP_CONCAT(h.nome SEPARATOR ', ')
+         FROM habilidades h
+         JOIN habilidades_candidatos hc ON h.id_habilidade = hc.id_habilidade
+         JOIN habilidades_vagas hv ON h.id_habilidade = hv.id_habilidade
+         WHERE hc.id_candidato = u.id_usuario AND hv.id_vaga = p_id_vaga AND hv.obrigatoria = FALSE) AS HabilidadesDiferenciais,
+
+        -- Habilidades Extra: O candidato tem, mas a vaga não lista.
+        (SELECT GROUP_CONCAT(h.nome SEPARATOR ', ')
+         FROM habilidades h
+         JOIN habilidades_candidatos hc ON h.id_habilidade = hc.id_habilidade
+         WHERE hc.id_candidato = u.id_usuario AND h.id_habilidade NOT IN (SELECT id_habilidade FROM habilidades_vagas WHERE id_vaga = p_id_vaga)) AS HabilidadesExtra,
+
+        -- Habilidades Faltantes: A vaga exige como obrigatória, mas o candidato não tem.
+        (SELECT GROUP_CONCAT(h.nome SEPARATOR ', ')
+         FROM habilidades h
+         JOIN habilidades_vagas hv ON h.id_habilidade = hv.id_habilidade
+         WHERE hv.id_vaga = p_id_vaga AND hv.obrigatoria = TRUE AND h.id_habilidade NOT IN (SELECT id_habilidade FROM habilidades_candidatos WHERE id_candidato = u.id_usuario)) AS HabilidadesFaltantes
+
+    FROM candidaturas c
+    JOIN usuarios u ON c.id_candidato = u.id_usuario
+    WHERE c.id_vaga = p_id_vaga
+    ORDER BY num_habilidades_exigidas DESC, num_habilidades_diferenciais DESC;
+END //
+DELIMITER ;
+
+-- Buscar todas as informações de habilidades por candidato
+DELIMITER //
+CREATE PROCEDURE buscar_todas_informacoes_habilidades_por_candidato(
+    IN p_id_candidato INT
+)
+BEGIN
+    SELECT h.*, hc.nivel
+    FROM habilidades h
+    JOIN habilidades_candidatos hc ON h.id_habilidade = hc.id_habilidade
+    WHERE hc.id_candidato = p_id_candidato;
+END //
+DELIMITER ;
+
+-- Buscar informações do candidato
+DELIMITER //
+CREATE PROCEDURE buscar_informacoes_do_candidato(
+    IN p_id_candidato INT
+)
+BEGIN
+    SELECT 
+        u.foto, 
+        u.nome, 
+        u.email, 
+        u.descricao, 
+        u.data_criacao, 
+        c.curriculo_link
+    FROM usuarios u
+    JOIN candidatos c ON u.id_usuario = c.id_candidato
+    WHERE u.id_usuario = p_id_candidato;
+END //
+DELIMITER ;
+
+-- Atualizar vaga por id
+DELIMITER //
+CREATE PROCEDURE atualizar_vaga_por_id(
+    IN p_id_vaga INT,
+    IN p_titulo VARCHAR(150),
+    IN p_descricao TEXT,
+    IN p_localizacao VARCHAR(150),
+    IN p_modalidade VARCHAR(100),
+    IN p_salario VARCHAR(50)
+)
+BEGIN
+    UPDATE vagas 
+    SET 
+        titulo = p_titulo, descricao = p_descricao, localizacao = p_localizacao, 
+        modalidade = p_modalidade, salario = p_salario
+    WHERE id_vaga = p_id_vaga;
+END //
+DELIMITER ;
+
+-- Atualizar habilidades da vaga
+DELIMITER //
+CREATE PROCEDURE atualizar_habilidades_vaga(
+    IN p_id_vaga INT,
+    IN p_habilidades_obrigatorias TEXT, -- Comma-separated list of required skill IDs
+    IN p_habilidades_diferenciais TEXT -- Comma-separated list of differential skill IDs
+)
+BEGIN
+    DECLARE current_id_str VARCHAR(10);
+    DECLARE remaining_ids TEXT;
+
+    -- 1. Remove all existing skills for this vacancy
+    DELETE FROM habilidades_vagas WHERE id_vaga = p_id_vaga;
+
+    -- 2. Insert the new required skills if the list is not empty
+    IF p_habilidades_obrigatorias IS NOT NULL AND LENGTH(p_habilidades_obrigatorias) > 0 THEN
+        SET remaining_ids = p_habilidades_obrigatorias;
+        WHILE LENGTH(remaining_ids) > 0 DO
+            SET current_id_str = SUBSTRING_INDEX(remaining_ids, ',', 1);
+            
+            INSERT INTO habilidades_vagas (id_vaga, id_habilidade, obrigatoria)
+            VALUES (p_id_vaga, CAST(current_id_str AS UNSIGNED), TRUE);
+
+            IF LOCATE(',', remaining_ids) > 0 THEN
+                SET remaining_ids = SUBSTRING(remaining_ids, LENGTH(current_id_str) + 2);
+            ELSE
+                SET remaining_ids = '';
+            END IF;
+        END WHILE;
+    END IF;
+
+    -- 3. Insert the new differential skills if the list is not empty
+    IF p_habilidades_diferenciais IS NOT NULL AND LENGTH(p_habilidades_diferenciais) > 0 THEN
+        SET remaining_ids = p_habilidades_diferenciais;
+        WHILE LENGTH(remaining_ids) > 0 DO
+            SET current_id_str = SUBSTRING_INDEX(remaining_ids, ',', 1);
+            
+            INSERT INTO habilidades_vagas (id_vaga, id_habilidade, obrigatoria)
+            VALUES (p_id_vaga, CAST(current_id_str AS UNSIGNED), FALSE);
+
+            IF LOCATE(',', remaining_ids) > 0 THEN
+                SET remaining_ids = SUBSTRING(remaining_ids, LENGTH(current_id_str) + 2);
+            ELSE
+                SET remaining_ids = '';
+            END IF;
+        END WHILE;
+    END IF;
+END //
+DELIMITER ;
+
+-- Deletar todas as candidaturas para uma vaga
+DELIMITER //
+CREATE PROCEDURE deletar_todas_candidaturas_para_vaga(
+    IN p_id_vaga INT
+)
+BEGIN
+    DELETE FROM candidaturas WHERE id_vaga = p_id_vaga;
 END //
 DELIMITER ;

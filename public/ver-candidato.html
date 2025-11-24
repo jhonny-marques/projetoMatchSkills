@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perfil do Candidato - Match Skills</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/main.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <a id="topo"></a>
     <nav class="navbar">
         <div class="container">
-            <a href="/empresa-home"><img src="img/logomatchskills1.svg" alt="Match Skills Logo" class="logo"></a>
+            <a href="/empresa-home"><img src="/img/logomatchskills1.svg" alt="Match Skills Logo" class="logo"></a>
             <ul class="nav-links">
                 <li><a href="/empresa-home">Início</a></li>
                 <li><a href="/minhas-vagas">Minhas Vagas</a></li>
@@ -20,7 +20,7 @@
                 <li><a href="/sobre-nos">Sobre Nós</a></li>
             </ul>
             <div class="nav-user">
-                <img src="https://via.placeholder.com/100/333333/FFFFFF?text=EMPRESA" alt="Foto de Perfil" class="profile-pic">
+                <img src="https://via.placeholder.com/100/333333/FFFFFF?text=EMPRESA" alt="Foto de Perfil" class="profile-pic" id="user-profile-pic">
                 <a href="#" class="logout-btn">Sair</a>
             </div>
         </div>
@@ -28,11 +28,11 @@
 
     <main class="main-content">
         <div class="container">
-            <header class="public-profile-header">
-                <img src="https://via.placeholder.com/150/CCCCCC/FFFFFF?text=USER" alt="Foto do Candidato" class="profile-pic">
+            <header class="public-profile-header" id="profile-header">
+                <img src="/img/fotos-perfil/candidato-sem-foto.png" alt="Foto do Candidato" class="profile-pic" id="candidato-foto">
                 <div class="header-info">
-                    <h1>Jonathas Araujo</h1>
-                    <p>Desenvolvedor Back-end | Node.js, SQL, AWS</p>
+                    <h1 id="candidato-nome">Carregando...</h1>
+                    <p id="candidato-email"></p>
                 </div>
             </header>
 
@@ -40,41 +40,19 @@
                 <main>
                     <div class="card no-translateY">
                         <h2>Descrição Pessoal</h2>
-                        <p>Desenvolvedor Back-end com 3 anos de experiência em Node.js e TypeScript, especializado na construção de APIs RESTful e arquiteturas de microsserviços. Focado em código limpo, testável e escalável. Buscando novos desafios em ambientes dinâmicos e colaborativos.</p>
+                        <p id="candidato-descricao">Carregando...</p>
                     </div>
 
-                    <div class="card no-translateY">
+                    <div class="card no-translateY" id="habilidades-container">
                         <h2>Habilidades e Competências</h2>
-                        <div class="skill-category">
-                            <h3>Hard Skills (Técnicas)</h3>
-                            <div class="selected-skills">
-                                <div class="skill-pill">Node.js</div>
-                                <div class="skill-pill">TypeScript</div>
-                                <div class="skill-pill">SQL (PostgreSQL)</div>
-                                <div class="skill-pill">AWS (S3, EC2)</div>
-                                <div class="skill-pill">Docker</div>
-                                <div class="skill-pill">Git</div>
-                            </div>
-                        </div>
-                        <div class="skill-category">
-                            <h3>Soft Skills (Comportamentais)</h3>
-                            <div class="selected-skills">
-                                <div class="skill-pill" style="background: var(--secondary-color);">Comunicação Efetiva</div>
-                                <div class="skill-pill" style="background: var(--secondary-color);">Proatividade</div>
-                                <div class="skill-pill" style="background: var(--secondary-color);">Trabalho em Equipe</div>
-                            </div>
-                        </div>
+                        <p>Carregando habilidades...</p>
                     </div>
                 </main>
 
                 <aside>
-                    <div class="card no-translateY">
+                    <div class="card no-translateY" id="info-card">
                         <h2>Informações</h2>
-                        <ul>
-                            <li><strong>E-mail:</strong> j*********@email.com</li>
-                            <li><strong>Local:</strong> São Paulo, SP</li>
-                        </ul>
-                        <a href="#" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Baixar Currículo (PDF)</a>
+                        <p>Carregando...</p>
                     </div>
                 </aside>
             </div>
@@ -83,7 +61,7 @@
 
     <footer class="footer">
         <div class="container">
-            <a href="/empresa-home"><img src="img/logomatchskills1.svg" alt="Match Skills Logo" class="logo"></a>
+            <a href="/empresa-home"><img src="/img/logomatchskills1.svg" alt="Match Skills Logo" class="logo"></a>
             <ul class="footer-links">
                 <li><a href="/sobre-nos">Sobre Nós</a></li>
                 <li><a href="/perfil-empresa">Meu Perfil</a></li>
@@ -93,6 +71,110 @@
         </div>
     </footer>
     
-    <script src="js/main.js"></script>
+    <script src="/js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const pathParts = window.location.pathname.split('/');
+            const id_candidato = pathParts[pathParts.length - 1];
+
+            if (!id_candidato || isNaN(id_candidato)) {
+                document.getElementById('candidato-nome').textContent = 'Candidato não encontrado';
+                return;
+            }
+
+            // --- Fetch Candidate Info ---
+            async function fetchCandidateInfo() {
+                try {
+                    const res = await fetch(`/api/candidatos/${id_candidato}/informacoes`);
+                    if (!res.ok) {
+                        throw new Error('Não foi possível carregar as informações do candidato.');
+                    }
+                    const info = await res.json();
+
+                    document.getElementById('candidato-foto').src = `/${info.foto || 'img/fotos-perfil/candidato-sem-foto.png'}`;
+                    document.getElementById('candidato-nome').textContent = info.nome;
+                    document.getElementById('candidato-email').textContent = info.email;
+                    document.getElementById('candidato-descricao').textContent = info.descricao || 'Nenhuma descrição pessoal fornecida.';
+
+                    const infoCard = document.getElementById('info-card');
+                    const joinDate = new Date(info.data_criacao).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+                    
+                    let curriculoHTML = '<p>Nenhum currículo disponível.</p>';
+                    if (info.curriculo_link) {
+                        curriculoHTML = `<a href="/${info.curriculo_link}" target="_blank" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Ver Currículo (PDF)</a>`;
+                    }
+
+                    infoCard.innerHTML = `
+                        <h2>Informações</h2>
+                        <ul>
+                            <li><strong>E-mail:</strong> ${info.email}</li>
+                            <li><strong>Desde:</strong> ${joinDate}</li>
+                        </ul>
+                        ${curriculoHTML}
+                    `;
+
+                } catch (error) {
+                    console.error('Erro ao buscar informações do candidato:', error);
+                    document.getElementById('candidato-nome').textContent = 'Erro ao carregar perfil';
+                }
+            }
+
+            // --- Fetch and Render Skills ---
+            async function fetchSkills() {
+                const container = document.getElementById('habilidades-container');
+                try {
+                    const res = await fetch(`/api/habilidades/candidato/${id_candidato}/detalhes`);
+                    if (!res.ok) {
+                        throw new Error('Não foi possível carregar as habilidades.');
+                    }
+                    const skillsData = await res.json();
+                    const skills = skillsData.data;
+
+                    if (!skills || skills.length === 0) {
+                        container.innerHTML = '<h2>Habilidades e Competências</h2><p>Nenhuma habilidade cadastrada.</p>';
+                        return;
+                    }
+
+                    // Group skills by category
+                    const skillsByCategory = skills.reduce((acc, skill) => {
+                        const category = skill.categoria || 'Outras';
+                        if (!acc[category]) {
+                            acc[category] = [];
+                        }
+                        acc[category].push(skill);
+                        return acc;
+                    }, {});
+
+                    let skillsHTML = '<h2>Habilidades e Competências</h2>';
+                    for (const category in skillsByCategory) {
+                        const isSoftSkill = category.toLowerCase().includes('comportamental');
+                        const pillStyle = isSoftSkill ? 'style="background: var(--secondary-color);"' : '';
+
+                        skillsHTML += `
+                            <div class="skill-category">
+                                <h3>${category}</h3>
+                                <div class="selected-skills">
+                                    ${skillsByCategory[category].map(skill => 
+                                        `<div class="skill-pill" ${pillStyle}>${skill.nome}</div>`
+                                    ).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                    container.innerHTML = skillsHTML;
+
+                } catch (error) {
+                    console.error('Erro ao buscar habilidades:', error);
+                    container.innerHTML = '<h2>Habilidades e Competências</h2><p>Ocorreu um erro ao carregar as habilidades.</p>';
+                }
+            }
+
+            // --- Initial Load ---
+            await Promise.all([
+                fetchCandidateInfo(),
+                fetchSkills()
+            ]);
+        });
+    </script>
 </body>
 </html>

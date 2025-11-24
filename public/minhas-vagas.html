@@ -28,43 +28,17 @@
 
     <main class="main-content">
         <div class="container">
-            <h1 class="page-title">Gerenciador de Vagas</h1>
-            <p class="page-subtitle">Visualize, edite e acompanhe os candidatos de suas vagas publicadas.</p>
-
-            <div class="premium-banner">
-                🌟 Você é um assinante Premium! Suas vagas recebem destaque nas buscas.
+            <div class="page-header-with-action">
+                <div>
+                    <h1 class="page-title">Gerenciador de Vagas</h1>
+                    <p class="page-subtitle">Visualize, edite e acompanhe os candidatos de suas vagas publicadas.</p>
+                </div>
+                <button class="btn btn-primary" id="criar-vaga-btn">Criar Vaga</button>
             </div>
 
-            <section class="results-list">
-                <div class="card job-card-management">
-                    <div class="job-info">
-                        <h3>Desenvolvedor(a) Back-End Pleno</h3>
-                        <div class="job-skills">
-                            <span class="skill-tag">Node.js</span>
-                            <span class="skill-tag">SQL</span>
-                            <span class="skill-tag">TypeScript</span>
-                        </div>
-                    </div>
-                    <div class="job-actions">
-                        <a href="/candidaturas" class="btn btn-primary">Ver Candidaturas (3)</a>
-                        <button class="btn btn-secondary" data-modal-target="#modalEditarVaga">Ver Detalhes / Editar</button>
-                    </div>
-                </div>
-
-                <div class="card job-card-management">
-                    <div class="job-info">
-                        <h3>UI/UX Designer Sênior</h3>
-                        <div class="job-skills">
-                            <span class="skill-tag">Figma</span>
-                            <span class="skill-tag">Design System</span>
-                            <span class="skill-tag">Pesquisa de Usuário</span>
-                        </div>
-                    </div>
-                    <div class="job-actions">
-                        <a href="/candidaturas" class="btn btn-primary">Ver Candidaturas (8)</a>
-                        <button class="btn btn-secondary" data-modal-target="#modalEditarVaga">Ver Detalhes / Editar</button>
-                    </div>
-                </div>
+            <section class="results-list no-gap" id="vagas-list">
+                <!-- Vagas serão inseridas aqui dinamicamente -->
+                <p>Carregando vagas...</p>
             </section>
         </div>
     </main>
@@ -82,71 +56,366 @@
     </footer>
 
     <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div id="notification-container"></div>
     <div class="modal" id="modalEditarVaga">
         <div class="modal-header">
-            <h3>Detalhes da Vaga</h3>
+            <h3 id="modal-title">Detalhes da Vaga</h3>
             <button class="modal-close" data-modal-close>&times;</button>
         </div>
-        <form class="modal-body">
+        <form class="modal-body" id="form-vaga">
             <div class="form-group">
-                <label for="cargo">Cargo (Nome da Vaga)</label>
-                <input type="text" id="cargo" value="Desenvolvedor(a) Back-End Pleno">
+                <label for="titulo">Cargo (Nome da Vaga)</label>
+                <input type="text" id="titulo" placeholder="Ex: Desenvolvedor(a) Back-End Pleno" required>
             </div>
             
             <div class="form-group">
-                <label for="skillsExigidas">Competências Exigidas</label>
-                <div class="multi-select-container">
-                    <input type="text" id="skillsExigidas" class="multi-select-input" placeholder="Buscar habilidades...">
+                <label for="habilidades-obrigatorias-input">Competências Exigidas</label>
+                <div class="multi-select-container" id="habilidades-obrigatorias-container">
+                    <input type="text" id="habilidades-obrigatorias-input" class="multi-select-input" placeholder="Buscar habilidades...">
                     <div class="suggestions-dropdown"></div>
-                    <div class="selected-skills">
-                        <div class="skill-pill" data-skill="Node.js">Node.js <span class="remove-skill">×</span></div>
-                        <div class="skill-pill" data-skill="SQL">SQL <span class="remove-skill">×</span></div>
-                    </div>
+                    <div class="selected-skills"></div>
                 </div>
             </div>
             
             <div class="form-group">
-                <label for="skillsDiferenciais">Competências Diferenciais</label>
-                <div class="multi-select-container">
-                    <input type="text" id="skillsDiferenciais" class="multi-select-input" placeholder="Buscar habilidades...">
+                <label for="habilidades-diferenciais-input">Competências Diferenciais</label>
+                <div class="multi-select-container" id="habilidades-diferenciais-container">
+                    <input type="text" id="habilidades-diferenciais-input" class="multi-select-input" placeholder="Buscar habilidades...">
                     <div class="suggestions-dropdown"></div>
-                    <div class="selected-skills">
-                        <div class="skill-pill" data-skill="AWS">AWS <span class="remove-skill">×</span></div>
+                    <div class="selected-skills"></div>
+                </div>
+            </div>
+
+            <div class="profile-grid-two one-to-two-thirds-separation">
+                <div class="form-group">
+                    <label for="modalidade">Modalidade</label>
+                    <select id="modalidade" required>
+                        <option value="Presencial">Presencial</option>
+                        <option value="Remoto">Remoto</option>
+                        <option value="Híbrido">Híbrido</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="salario">Salário</label>
+                    <div class="input-with-checkbox">
+                        <input type="text" id="salario" placeholder="Ex: R$ 5.000,00" required>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="salario-combinar">
+                            <label for="salario-combinar">A Combinar</label>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="modalidade">Modalidade</label>
-                <select id="modalidade">
-                    <option value="presencial">Presencial</option>
-                    <option value="remoto" selected>Remoto</option>
-                    <option value="hibrido">Híbrido</option>
-                </select>
+                <label for="localizacao">Local</label>
+                <input type="text" id="localizacao" placeholder="Ex: São Paulo, SP ou Remoto" required>
             </div>
 
-            <div class="profile-grid-two">
-                <div class="form-group">
-                    <label for="cep">CEP</label>
-                    <input type="text" id="cep" value="01000-000">
-                </div>
-                <div class="form-group">
-                    <label for="estado">Estado</label>
-                    <select id="estado"><option>SP</option><option>RJ</option></select>
-                </div>
-                <div class="form-group">
-                    <label for="cidade">Cidade</label>
-                    <select id="cidade"><option>São Paulo</option></select>
-                </div>
+            <div class="form-group">
+                <label for="descricao">Descrição da Vaga</label>
+                <textarea id="descricao" rows="5" placeholder="Detalhes sobre a vaga, responsabilidades, etc." required></textarea>
             </div>
-            
         </form>
         <div class="modal-footer">
-            <button class="btn btn-danger" data-modal-close>Excluir Vaga</button>
-            <button class="btn btn-primary" data-modal-close>Salvar Edições</button>
+            <button class="btn btn-danger" id="excluir-vaga-btn" style="display: none;">Excluir Vaga</button>
+            <button class="btn btn-primary" id="salvar-vaga-btn">Salvar</button>
         </div>
     </div>
     
+    <div id="notification-container"></div>
+    <div class="confirmation-backdrop" id="confirmationBackdrop"></div>
+    <div class="confirmation-dialog" id="confirmationDialog">
+        <p class="confirmation-message">Você tem certeza?</p>
+        <div class="confirmation-buttons">
+            <button class="btn btn-secondary btn-cancel">Cancelar</button>
+            <button class="btn btn-danger btn-confirm">Confirmar</button>
+        </div>
+    </div>
+
     <script src="js/main.js"></script>
+    <script>
+        // Temporary user for testing purposes
+        const usuario = {
+            id: 1
+        };
+
+        let currentVagaId = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadVagas();
+
+            document.getElementById('criar-vaga-btn').addEventListener('click', () => openModalParaCriar());
+            document.getElementById('salvar-vaga-btn').addEventListener('click', handleSaveVaga);
+            document.getElementById('excluir-vaga-btn').addEventListener('click', handleDeleteVaga);
+
+            // Salario input logic
+            document.getElementById('salario').addEventListener('input', formatarSalario);
+            document.getElementById('salario-combinar').addEventListener('change', toggleSalarioInput);
+            document.getElementById('modalidade').addEventListener('change', handleModalidadeChange);
+        });
+
+        async function loadVagas() {
+            const vagasList = document.getElementById('vagas-list');
+            try {
+                const response = await fetch(`/api/vagas/empresa/${usuario.id}`);
+                if (!response.ok) throw new Error('Erro ao buscar vagas.');
+                
+                const vagas = await response.json();
+                vagasList.innerHTML = '';
+
+                if (vagas.length === 0) {
+                    vagasList.innerHTML = '<p>Nenhuma vaga publicada ainda. Clique em "Criar Vaga" para começar.</p>';
+                    return;
+                }
+
+                for (const vaga of vagas) {
+                    const skillsResponse = await fetch(`/api/habilidades/vaga/${vaga.id_vaga}`);
+                    const skillsData = await skillsResponse.json();
+                    const skillsHTML = skillsData.data.map(h => `<span class="skill-tag">${h.nome}</span>`).join('') || 'Nenhuma habilidade especificada.';
+
+                    const card = document.createElement('div');
+                    card.className = 'card job-card-management';
+                    card.innerHTML = `
+                        <div class="job-info">
+                            <h3>${vaga.titulo}</h3>
+                            <div class="job-skills">${skillsHTML}</div>
+                        </div>
+                        <div class="job-actions">
+                            <a href="/candidaturas/${vaga.id_vaga}" class="btn btn-primary">Ver Candidaturas</a>
+                            <button class="btn btn-secondary" onclick="openModalParaEditar(${vaga.id_vaga})">Ver Detalhes / Editar</button>
+                        </div>
+                    `;
+                    vagasList.appendChild(card);
+                }
+            } catch (error) {
+                vagasList.innerHTML = `<p>${error.message}</p>`;
+                console.error(error);
+            }
+        }
+
+        function openModal(modal) {
+            if (modal == null) return;
+            const backdrop = document.getElementById('modalBackdrop');
+            if (backdrop) backdrop.classList.add("show");
+            modal.classList.add("show");
+        }
+
+        function closeModal(modal) {
+            if (modal == null) return;
+            const backdrop = document.getElementById('modalBackdrop');
+            if (backdrop) backdrop.classList.remove("show");
+            modal.classList.remove("show");
+        }
+
+        function resetModal() {
+            document.getElementById('form-vaga').reset();
+            document.querySelector('#habilidades-obrigatorias-container .selected-skills').innerHTML = '';
+            document.querySelector('#habilidades-diferenciais-container .selected-skills').innerHTML = '';
+            currentVagaId = null;
+            document.getElementById('salario-combinar').checked = false;
+            previousLocalizacaoValue = '';
+            handleModalidadeChange(); // Reset localizacao field state
+        }
+
+        function openModalParaCriar() {
+            resetModal();
+            document.getElementById('modal-title').textContent = 'Criar Nova Vaga';
+            document.getElementById('salvar-vaga-btn').textContent = 'Criar Vaga';
+            document.getElementById('excluir-vaga-btn').style.display = 'none';
+            const modal = document.getElementById('modalEditarVaga');
+            openModal(modal);
+        }
+
+        async function openModalParaEditar(id_vaga) {
+            resetModal();
+            currentVagaId = id_vaga;
+
+            document.getElementById('modal-title').textContent = 'Detalhes da Vaga';
+            document.getElementById('salvar-vaga-btn').textContent = 'Salvar Edições';
+            document.getElementById('excluir-vaga-btn').style.display = 'inline-block';
+
+            try {
+                const [vagaRes, skillsRes] = await Promise.all([
+                    fetch(`/api/vagas/${id_vaga}`),
+                    fetch(`/api/habilidades/vaga/${id_vaga}`)
+                ]);
+
+                if (!vagaRes.ok || !skillsRes.ok) throw new Error('Falha ao carregar dados da vaga.');
+
+                const vagaData = await vagaRes.json();
+                const skillsData = await skillsRes.json();
+                const vaga = vagaData[0];
+
+                document.getElementById('titulo').value = vaga.titulo;
+                document.getElementById('descricao').value = vaga.descricao;
+                document.getElementById('localizacao').value = vaga.localizacao;
+                document.getElementById('modalidade').value = vaga.modalidade;
+
+                if (vaga.salario === 'A Combinar') {
+                    document.getElementById('salario-combinar').checked = true;
+                    document.getElementById('salario').disabled = true;
+                    document.getElementById('salario').value = '';
+                } else {
+                    document.getElementById('salario').value = vaga.salario;
+                }
+
+                const obrigatoriasContainer = document.querySelector('#habilidades-obrigatorias-container');
+                const diferenciaisContainer = document.querySelector('#habilidades-diferenciais-container');
+
+                skillsData.data.forEach(skill => {
+                    if (skill.obrigatoria) {
+                        obrigatoriasContainer.addSkill(skill.nome, skill.id_habilidade);
+                    } else {
+                        diferenciaisContainer.addSkill(skill.nome, skill.id_habilidade);
+                    }
+                });
+
+                const modal = document.getElementById('modalEditarVaga');
+                handleModalidadeChange(); // Reset localizacao field state
+                openModal(modal);
+            } catch (error) {
+                window.showNotification(error.message, 'error');
+            }
+        }
+
+        async function handleSaveVaga(event) {
+            event.preventDefault();
+
+            // Adiciona confirmação se for uma atualização
+            if (currentVagaId) {
+                const confirmed = await window.showConfirmationDialog('Atenção: Salvar as edições desta vaga irá remover todas as candidaturas existentes. Deseja continuar?');
+                if (!confirmed) {
+                    window.showNotification('Ação cancelada.', 'error');
+                    return; // Interrompe a função se o usuário cancelar
+                }
+            }
+
+            const salarioInput = document.getElementById('salario');
+            const salarioCombinarCheckbox = document.getElementById('salario-combinar');
+            const salarioValue = salarioCombinarCheckbox.checked ? 'A Combinar' : salarioInput.value;
+
+            const vagaData = {
+                titulo: document.getElementById('titulo').value,
+                descricao: document.getElementById('descricao').value,
+                localizacao: document.getElementById('localizacao').value,
+                modalidade: document.getElementById('modalidade').value,
+                salario: salarioValue,
+                id_empresa: usuario.id
+            };
+
+            const obrigatoriasIds = Array.from(document.querySelectorAll('#habilidades-obrigatorias-container .skill-pill')).map(p => p.dataset.skillId);
+            const diferenciaisIds = Array.from(document.querySelectorAll('#habilidades-diferenciais-container .skill-pill')).map(p => p.dataset.skillId);
+
+            const method = currentVagaId ? 'PUT' : 'POST';
+            const url = currentVagaId ? `/api/vagas/${currentVagaId}` : '/api/vagas';
+
+            try {
+                const vagaRes = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(vagaData)
+                });
+
+                if (!vagaRes.ok) throw new Error('Falha ao salvar a vaga.');
+                
+                const result = await vagaRes.json();
+                const vagaId = currentVagaId || result.vaga[0][0].id_vaga;
+
+                const skillsRes = await fetch(`/api/habilidades/vaga/${vagaId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        habilidades_obrigatorias: obrigatoriasIds,
+                        habilidades_diferenciais: diferenciaisIds
+                    })
+                });
+
+                if (!skillsRes.ok) throw new Error('Vaga salva, mas falha ao atualizar habilidades.');
+
+                window.showNotification('Vaga salva com sucesso!', 'success');
+                closeModal(document.getElementById('modalEditarVaga'));
+                await loadVagas();
+
+            } catch (error) {
+                window.showNotification(error.message, 'error');
+            }
+        }
+
+        async function handleDeleteVaga() {
+            if(!currentVagaId){
+                return;
+            }
+            if (!await window.showConfirmationDialog('Tem certeza que deseja excluir esta vaga? Esta ação não pode ser desfeita.')) {
+                window.showNotification('Ação cancelada.', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/vagas/${currentVagaId}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Falha ao excluir a vaga.');
+
+                window.showNotification('Vaga excluída com sucesso!', 'success');
+                closeModal(document.getElementById('modalEditarVaga'));
+                await loadVagas();
+            } catch (error) {
+                window.showNotification(error.message, 'error');
+            }
+        }
+
+        let previousLocalizacaoValue = '';
+
+        function handleModalidadeChange() {
+            const modalidadeSelect = document.getElementById('modalidade');
+            const localizacaoInput = document.getElementById('localizacao');
+
+            if (modalidadeSelect.value === 'Remoto') {
+                // Only store the previous value if the field is currently enabled
+                if (!localizacaoInput.disabled) {
+                    previousLocalizacaoValue = localizacaoInput.value;
+                }
+                localizacaoInput.value = 'Remoto';
+                localizacaoInput.disabled = true;
+            } else {
+                // Only restore if the field was disabled
+                if (localizacaoInput.disabled) {
+                    localizacaoInput.value = previousLocalizacaoValue;
+                }
+                localizacaoInput.disabled = false;
+            }
+        }
+
+        function toggleSalarioInput() {
+            const salarioInput = document.getElementById('salario');
+            const isChecked = document.getElementById('salario-combinar').checked;
+
+            salarioInput.disabled = isChecked;
+            if (isChecked) {
+                salarioInput.value = '';
+                salarioInput.required = false;
+            } else {
+                salarioInput.required = true;
+            }
+        }
+
+        function formatarSalario(e) {
+            let valor = e.target.value.replace(/\D/g, '');
+            if (!valor) {
+                e.target.value = '';
+                return;
+            }
+
+            valor = (parseInt(valor, 10) / 100).toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+            if (valor === 'NaN') {
+                e.target.value = 'R$ ';
+            } else {
+                e.target.value = 'R$ ' + valor;
+            }
+        }
+    </script>
 </body>
 </html>

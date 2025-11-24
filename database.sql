@@ -100,6 +100,7 @@ CREATE TABLE candidaturas (
     id_candidato INT NOT NULL COMMENT 'Quem aplicou',
     data_candidatura DATETIME NOT NULL COMMENT 'Registro',
     status ENUM('Enviado', 'Em Análise', 'Rejeitado', 'Aprovado') NOT NULL COMMENT 'Situação',
+    UNIQUE KEY `idx_vaga_candidato` (`id_vaga`, `id_candidato`) COMMENT 'Evita candidaturas duplicadas',
     FOREIGN KEY (id_vaga) REFERENCES vagas(id_vaga),
     FOREIGN KEY (id_candidato) REFERENCES candidatos(id_candidato)
 );

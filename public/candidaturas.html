@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Candidaturas - Match Skills</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/main.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <a id="topo"></a>
     <nav class="navbar">
         <div class="container">
-            <a href="/empresa-home"><img src="img/logomatchskills1.svg" alt="Match Skills Logo" class="logo"></a>
+            <a href="/empresa-home"><img src="/img/logomatchskills1.svg" alt="Match Skills Logo" class="logo"></a>
             <ul class="nav-links">
                 <li><a href="/empresa-home">Início</a></li>
                 <li><a href="/minhas-vagas">Minhas Vagas</a></li>
@@ -28,82 +28,25 @@
 
     <main class="main-content">
         <div class="container">
-            <div class="applicants-header">
-                <h1 class="page-title" style="margin-bottom: 5px;">Desenvolvedor(a) Back-End Pleno</h1>
-                <p><strong>Habilidades Exigidas:</strong> Node.js, SQL, TypeScript</p>
+            <div class="applicants-header" id="vaga-header">
+                <h1 class="page-title" style="margin-bottom: 5px;" id="vaga-titulo">Carregando...</h1>
+                <p id="vaga-habilidades-exigidas"><strong>Habilidades Exigidas:</strong> Carregando...</p>
+                <p id="vaga-habilidades-diferenciais"><strong>Habilidades Diferenciais:</strong> Carregando...</p>
                 <div class="actions">
                     <a href="/minhas-vagas" class="btn btn-secondary">Voltar para Minhas Vagas</a>
-                    <a href="#" class="btn btn-danger">Excluir Vaga</a>
+                    <button class="btn btn-danger" id="excluir-vaga-btn">Excluir Vaga</button>
                 </div>
             </div>
 
-            <section class="results-list">
-                <h2 style="margin-bottom: 20px;">Candidatos Inscritos (3)</h2>
-
-                <a href="/ver-candidato" class="card candidate-card premium">
-                    <img src="https://via.placeholder.com/100/ffd700/000?text=USER-P" alt="Foto Candidato" class="candidate-pic">
-                    <div class="candidate-info">
-                        <h3>Jonathas Araujo (Candidato Premium)</h3>
-                        <div class="skills-match">
-                            <h4>Habilidades Compatíveis</h4>
-                            <div class="skills-list">
-                                <span style="background: #28a745; color: #fff;">Node.js</span>
-                                <span style="background: #28a745; color: #fff;">SQL</span>
-                                <span style="background: #ffc107; color: #333;">TypeScript (Diferencial)</span>
-                            </div>
-                        </div>
-                        <div class="skills-match">
-                            <h4>Habilidades Extra</h4>
-                            <div class="skills-list">
-                                <span>AWS</span>
-                                <span>React</span>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-
-                <a href="/ver-candidato" class="card candidate-card">
-                    <img src="https://via.placeholder.com/100/CCCCCC/FFFFFF?text=USER" alt="Foto Candidato" class="candidate-pic">
-                    <div class="candidate-info">
-                        <h3>Kaue Jesus</h3>
-                        <div class="skills-match">
-                            <h4>Habilidades Compatíveis</h4>
-                            <div class="skills-list">
-                                <span style="background: #28a745; color: #fff;">Node.js</span>
-                                <span style="background: #dc3545; color: #fff;">SQL (Faltante)</span>
-                                <span style="background: #dc3545; color: #fff;">TypeScript (Faltante)</span>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-
-                <a href="/ver-candidato" class="card candidate-card">
-                    <img src="https://via.placeholder.com/100/999999/FFFFFF?text=USER" alt="Foto Candidato" class="candidate-pic">
-                    <div class="candidate-info">
-                        <h3>Jhonny Marques</h3>
-                        <div class="skills-match">
-                            <h4>Habilidades Compatíveis</h4>
-                            <div class="skills-list">
-                                <span style="background: #28a745; color: #fff;">Node.js</span>
-                                <span style="background: #28a745; color: #fff;">SQL</span>
-                                <span style="background: #dc3545; color: #fff;">TypeScript (Faltante)</span>
-                            </div>
-                        </div>
-                        <div class="skills-match">
-                            <h4>Habilidades Extra</h4>
-                            <div class="skills-list">
-                                <span>MongoDB</span>
-                            </div>
-                        </div>
-                    </div>
-                </a>
+            <section class="results-list" id="candidatos-lista">
+                <h2 style="margin-bottom: 20px;" id="candidatos-titulo">Carregando candidatos...</h2>
             </section>
         </div>
     </main>
 
     <footer class="footer">
         <div class="container">
-            <a href="/empresa-home"><img src="img/logomatchskills1.svg" alt="Match Skills Logo" class="logo"></a>
+            <a href="/empresa-home"><img src="/img/logomatchskills1.svg" alt="Match Skills Logo" class="logo"></a>
             <ul class="footer-links">
                 <li><a href="/sobre-nos">Sobre Nós</a></li>
                 <li><a href="/perfil-empresa">Meu Perfil</a></li>
@@ -113,6 +56,167 @@
         </div>
     </footer>
     
-    <script src="js/main.js"></script>
+    <div id="notification-container"></div>
+    <div class="confirmation-backdrop" id="confirmationBackdrop"></div>
+    <div class="confirmation-dialog" id="confirmationDialog">
+        <p class="confirmation-message">Você tem certeza?</p>
+        <div class="confirmation-buttons">
+            <button class="btn btn-secondary btn-cancel">Cancelar</button>
+            <button class="btn btn-danger btn-confirm">Confirmar</button>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const vagaTituloEl = document.getElementById('vaga-titulo');
+            const vagaHabilidadesEl = document.getElementById('vaga-habilidades-exigidas');
+            const vagaHabilidadesDiferenciaisEl = document.getElementById('vaga-habilidades-diferenciais');
+            const candidatosTituloEl = document.getElementById('candidatos-titulo');
+            const candidatosListaEl = document.getElementById('candidatos-lista');
+            const excluirVagaBtn = document.getElementById('excluir-vaga-btn');
+
+            const pathParts = window.location.pathname.split('/');
+            const id_vaga = pathParts[pathParts.length - 1];
+
+            if (!id_vaga || isNaN(id_vaga)) {
+                vagaTituloEl.textContent = 'ID da Vaga Inválido';
+                return;
+            }
+
+            // --- Fetch Vaga Details ---
+            async function fetchVagaDetails() {
+                try {
+                    const [vagaRes, skillsRes] = await Promise.all([
+                        fetch(`/api/vagas/${id_vaga}`),
+                        fetch(`/api/habilidades/vaga/${id_vaga}`)
+                    ]);
+
+                    if (vagaRes.ok) {
+                        const vagaData = await vagaRes.json();
+                        vagaTituloEl.textContent = vagaData[0].titulo;
+                    } else {
+                        vagaTituloEl.textContent = 'Vaga não encontrada';
+                    }
+
+                    if (skillsRes.ok) {
+                        const skillsData = await skillsRes.json();
+                        const requiredSkills = skillsData.data
+                            .filter(s => s.obrigatoria)
+                            .map(s => s.nome)
+                            .join(', ');
+                        const differentialSkills = skillsData.data
+                            .filter(s => !s.obrigatoria)
+                            .map(s => s.nome)
+                            .join(', ');
+
+                        vagaHabilidadesEl.innerHTML = `<strong>Habilidades Exigidas:</strong> ${requiredSkills || 'Nenhuma.'}`;
+                        vagaHabilidadesDiferenciaisEl.innerHTML = `<strong>Habilidades Diferenciais:</strong> ${differentialSkills || 'Nenhuma.'}`;
+                    }
+                } catch (error) {
+                    console.error('Erro ao buscar detalhes da vaga:', error);
+                    vagaTituloEl.textContent = 'Erro ao carregar vaga';
+                }
+            }
+
+            // --- Fetch and Render Candidates ---
+            async function fetchCandidatos() {
+                try {
+                    const res = await fetch(`/api/vagas/${id_vaga}/candidatos`);
+                    if (!res.ok) {
+                        const errorData = await res.json();
+                        candidatosTituloEl.textContent = 'Candidatos Inscritos (0)';
+                        candidatosListaEl.insertAdjacentHTML('beforeend', `<p>${errorData.message || 'Não foi possível carregar os candidatos.'}</p>`);
+                        return;
+                    }
+
+                    const candidatos = await res.json();
+                    candidatosTituloEl.textContent = `Candidatos Inscritos (${candidatos.length})`;
+
+                    if (candidatos.length === 0) {
+                        candidatosListaEl.insertAdjacentHTML('beforeend', `<p>Ainda não há candidatos para esta vaga.</p>`);
+                        return;
+                    }
+
+                    candidatos.forEach(candidato => {
+                        const card = document.createElement('a');
+                        card.href = `/ver-candidato/${candidato.id_candidato}`; // Assuming a future page
+                        card.className = 'card candidate-card';
+
+                        const habilidadesExigidasHTML = candidato.HabilidadesExigidas 
+                            ? candidato.HabilidadesExigidas.split(', ').map(h => `<span style="background: #28a745; color: #fff;">${h}</span>`).join('')
+                            : '';
+                        
+                        const habilidadesDiferenciaisHTML = candidato.HabilidadesDiferenciais
+                            ? candidato.HabilidadesDiferenciais.split(', ').map(h => `<span style="background: #ffc107; color: #333;">${h} (Diferencial)</span>`).join('')
+                            : '';
+
+                        const habilidadesFaltantesHTML = candidato.HabilidadesFaltantes
+                            ? candidato.HabilidadesFaltantes.split(', ').map(h => `<span style="background: #dc3545; color: #fff;">${h} (Faltante)</span>`).join('')
+                            : '';
+
+                        const habilidadesExtraHTML = candidato.HabilidadesExtra
+                            ? `<div class="skills-match">
+                                   <h4>Habilidades Extra</h4>
+                                   <div class="skills-list">
+                                       ${candidato.HabilidadesExtra.split(', ').map(h => `<span>${h}</span>`).join('')}
+                                   </div>
+                               </div>`
+                            : '';
+
+                        card.innerHTML = `
+                            <img src="/${candidato.foto || 'img/fotos-perfil/candidato-sem-foto.png'}" alt="Foto Candidato" class="candidate-pic">
+                            <div class="candidate-info">
+                                <h3>${candidato.nome}</h3>
+                                <div class="skills-match">
+                                    <h4>Análise de Habilidades</h4>
+                                    <div class="skills-list">
+                                        ${habilidadesExigidasHTML}
+                                        ${habilidadesDiferenciaisHTML}
+                                        ${habilidadesFaltantesHTML}
+                                    </div>
+                                </div>
+                                ${habilidadesExtraHTML}
+                            </div>
+                        `;
+                        candidatosListaEl.appendChild(card);
+                    });
+
+                } catch (error) {
+                    console.error('Erro ao buscar candidatos:', error);
+                    candidatosTituloEl.textContent = 'Erro';
+                    candidatosListaEl.insertAdjacentHTML('beforeend', `<p>Ocorreu um erro ao carregar os candidatos.</p>`);
+                }
+            }
+
+            // --- Delete Vaga ---
+            excluirVagaBtn.addEventListener('click', async () => {
+                if (await window.showConfirmationDialog('Tem certeza que deseja excluir esta vaga? Esta ação não pode ser desfeita.')) {
+                    try {
+                        const res = await fetch(`/api/vagas/${id_vaga}`, {
+                            method: 'DELETE'
+                        });
+
+                        const result = await res.json();
+
+                        if (res.ok) {
+                            window.showNotification(result.message);
+                            window.location.href = '/minhas-vagas';
+                        } else {
+                            throw new Error(result.message || 'Falha ao excluir a vaga.');
+                        }
+                    } catch (error) {
+                        window.showNotification(`Erro: ${error.message}`);
+                    }
+                }else{
+                    window.showNotification('Ação cancelada.', 'error');
+                }
+            });
+
+            // --- Initial Load ---
+            await fetchVagaDetails();
+            await fetchCandidatos();
+        });
+    </script>
 </body>
 </html>

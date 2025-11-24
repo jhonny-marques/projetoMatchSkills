@@ -3,9 +3,7 @@ const router = express.Router();
 const usuarioController = require("../controllers/usuarios-controller.js");
 const verificarSessao = require("../middlewares/auth.js");
 
-router.post("/register", usuarioController.criar_usuario);
-// router.post("/criar-empresa", usuarioController.criar_empresa);
-// router.post("/criar-candidato", usuarioController.criar_candidato);
+router.post("/criar-usuario", usuarioController.criar_usuario);
 
 router.post("/login", usuarioController.verificarLogin);
 router.get("/menu", verificarSessao, (req, res) => {

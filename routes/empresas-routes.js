@@ -7,7 +7,9 @@ const empresasController = require('../controllers/empresas-controller.js');
 
 router.get('/api/empresas/buscar', empresasController.buscar_empresas_por_nome);
 router.get('/api/empresas/:id', empresasController.buscar_empresa_por_id);
+router.get('/api/empresas/completo/:id', empresasController.buscar_empresa_completa_por_id);
 router.get('/api/empresas', empresasController.buscar_empresas_aleatorias);
+router.put('/api/empresas/:id', empresasController.atualizar_empresa);
 
 // Front-end
 
@@ -25,10 +27,6 @@ router.get('/perfil-empresa', (req, res) => {
 
 router.get('/ver-empresa', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'ver-empresa.html'));
-});
-
-router.get('/candidaturas', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'public', 'candidaturas.html'));
 });
 
 module.exports = router;

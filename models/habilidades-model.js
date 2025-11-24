@@ -85,6 +85,30 @@ const habilidadesModel = {
             console.error('Erro ao buscar habilidades por candidato no modelo:', error);
             throw error;
         }
+    },
+
+    buscar_todas_informacoes_habilidades_por_candidato: async(id_candidato) => {
+        try {
+            const sql = 'CALL buscar_todas_informacoes_habilidades_por_candidato(?)';
+            const [rows] = await db.execute(sql, [id_candidato]);
+            return rows[0];
+        } catch (error) {
+            console.error('Erro ao buscar todas as informações de habilidades por candidato no modelo:', error);
+            throw error;
+        }
+    },
+
+    atualizar_habilidades_vaga: async(id_vaga, habilidades_obrigatorias, habilidades_diferenciais) => {
+        try {
+            const sql = 'CALL atualizar_habilidades_vaga(?, ?, ?)';
+            const obrigatoriasStr = habilidades_obrigatorias.join(',');
+            const diferenciaisStr = habilidades_diferenciais.join(',');
+            await db.execute(sql, [id_vaga, obrigatoriasStr, diferenciaisStr]);
+            return true;
+        } catch (error) {
+            console.error('Erro ao atualizar habilidades da vaga no modelo:', error);
+            throw error;
+        }
     }
 }
 

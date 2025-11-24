@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div id="notification-container"></div>
     <a id="topo"></a>
     <nav class="navbar">
         <div class="container">
@@ -31,20 +32,26 @@
         <div class="container">
             <div class="profile-layout">
                 <aside class="profile-sidebar">
-                    <img src="https://via.placeholder.com/200/333333/FFFFFF?text=EMPRESA" alt="Logo da Empresa" class="main-profile-pic">
-                    <h2>Empresa Tech S/A</h2>
-                    <p class="join-date">Membro desde 25 de Outubro, 2025</p>
-                    <a href="#" class="btn btn-primary">Modificar Dados</a>
+                    <div class="profile-pic-container">
+                        <img src="/img/fotos-perfil/empresa-sem-foto.png" alt="Logo da Empresa" class="main-profile-pic" id="profilePic">
+                        <div class="edit-overlay">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                        </div>
+                        <input type="file" id="profilePicInput" accept="image/*" style="display: none;">
+                    </div>
+                    <h2 id="companyName">Nome da Empresa</h2>
+                    <p class="join-date" id="joinDate">Membro desde...</p>
+                    <a href="#" class="btn btn-primary" id="editButton">Modificar Dados</a>
                     <a href="/minhas-vagas" class="btn btn-secondary">Ver Minhas Vagas</a>
                 </aside>
 
                 <section class="profile-content">
                     <div class="card no-translateY">
                         <h3>Informações da Conta</h3>
-                        <form>
+                        <form id="profileForm">
                             <div class="form-group">
                                 <label for="razaoSocial">Razão Social</label>
-                                <input type="text" id="razaoSocial" value="Empresa Tech S/A" readonly>
+                                <input type="text" id="razaoSocial" readonly>
                             </div>
                             <div class="profile-grid-two">
                                 <div class="form-group">
@@ -53,12 +60,35 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="cnpj">CNPJ</label>
-                                    <input type="text" id="cnpj" value="12.345.678/0001-99" readonly>
+                                    <input type="text" id="cnpj" readonly>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label for="site">Site</label>
-                                <input type="text" id="site" value="https://www.empresatech.com" readonly>
+                                <input type="text" id="site" readonly>
+                            </div>
+                            <div class="profile-grid-two">
+                                <div class="form-group">
+                                    <label for="setor">Setor</label>
+                                    <input type="text" id="setor" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="local">Local</label>
+                                    <input type="text" id="local" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="tamanho">Tamanho da Empresa</label>
+                                <select id="tamanho" disabled>
+                                    <option value="Pequena">Pequena (até 49 funcionários)</option>
+                                    <option value="Média">Média (50-499 funcionários)</option>
+                                    <option value="Grande">Grande (500+ funcionários)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="descricao">Descrição da Empresa</label>
+                                <textarea id="descricao" readonly rows="4"></textarea>
                             </div>
                         </form>
                     </div>
@@ -80,5 +110,155 @@
     </footer>
     
     <script src="js/main.js"></script>
+    <script>
+        // Temporary user for testing purposes
+        const usuario = {
+            id: 1
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('profileForm');
+            const fields = form.querySelectorAll('input, textarea, select');
+            const editButton = document.getElementById('editButton');
+            const profilePicContainer = document.querySelector('.profile-pic-container');
+            const profilePicInput = document.getElementById('profilePicInput');
+            const profilePicImg = document.getElementById('profilePic');
+
+            let isEditMode = false;
+
+            // --- Load initial data ---
+            async function loadProfileData() {
+                try {
+                    const res = await fetch(`/api/empresas/completo/${usuario.id}`);
+                    if (!res.ok) throw new Error('Empresa não encontrada.');
+                    
+                    const data = await res.json();
+                    const empresa = data[0];
+
+                    // Populate sidebar
+                    document.getElementById('companyName').textContent = empresa.razao_social;
+                    const joinDate = new Date(empresa.data_criacao).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+                    document.getElementById('joinDate').textContent = `Membro desde ${joinDate}`;
+                    profilePicImg.src = empresa.foto || '/img/fotos-perfil/empresa-sem-foto.png';
+
+                    // Populate form
+                    document.getElementById('razaoSocial').value = empresa.razao_social;
+                    document.getElementById('email').value = empresa.email;
+                    document.getElementById('cnpj').value = empresa.cnpj;
+                    document.getElementById('site').value = empresa.site || '';
+                    document.getElementById('setor').value = empresa.setor || '';
+                    document.getElementById('local').value = empresa.local || '';
+                    document.getElementById('tamanho').value = empresa.tamanho || 'Pequena';
+                    document.getElementById('descricao').value = empresa.descricao || '';
+
+                } catch (error) {
+                    console.error('Erro ao carregar perfil:', error);
+                    window.showNotification('Não foi possível carregar os dados do perfil.', 'error');
+                }
+            }
+
+            // --- Toggle Edit Mode ---
+            editButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                isEditMode = !isEditMode;
+                toggleEditState();
+
+                if (!isEditMode) {
+                    // If switching from edit to view mode, it means "Salvar" was clicked
+                    submitForm();
+                }
+            });
+
+            function toggleEditState() {
+                fields.forEach(field => {
+                    if (field.tagName.toLowerCase() === 'select') {
+                        field.disabled = !isEditMode;
+                    } else {
+                        field.readOnly = !isEditMode;
+                    }
+                });
+
+                if (isEditMode) {
+                    editButton.textContent = 'Salvar Alterações';
+                    editButton.classList.remove('btn-primary');
+                    editButton.classList.add('btn-secondary');
+                } else {
+                    editButton.textContent = 'Modificar Dados';
+                    editButton.classList.add('btn-primary');
+                    editButton.classList.remove('btn-secondary');
+                }
+            }
+
+            // --- Profile Picture Upload ---
+            profilePicContainer.addEventListener('click', () => profilePicInput.click());
+
+            profilePicInput.addEventListener('change', async () => {
+                const file = profilePicInput.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('id_usuario', usuario.id);
+                formData.append('foto', file);
+
+                try {
+                    const res = await fetch(`/usuarios/atualizar-foto`, {
+                        method: 'PATCH',
+                        body: formData
+                    });
+
+                    const result = await res.json();
+                    if (res.ok) {
+                        profilePicImg.src = result.foto_url;
+                        window.showNotification('Foto de perfil atualizada com sucesso!');
+                    } else {
+                        throw new Error(result.message || 'Falha ao atualizar a foto.');
+                    }
+                } catch (error) {
+                    console.error('Erro no upload da foto:', error);
+                    window.showNotification(`Falha ao salvar foto: ${error.message}`, 'error');
+                }
+            });
+
+            // --- Form Submission ---
+            async function submitForm() {
+                const data = {
+                    razao_social: document.getElementById('razaoSocial').value,
+                    email: document.getElementById('email').value,
+                    cnpj: document.getElementById('cnpj').value,
+                    site: document.getElementById('site').value,
+                    setor: document.getElementById('setor').value,
+                    local: document.getElementById('local').value,
+                    tamanho: document.getElementById('tamanho').value,
+                    descricao: document.getElementById('descricao').value,
+                };
+
+                try {
+                    const res = await fetch(`/api/empresas/${usuario.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (!res.ok) {
+                        const errorData = await res.json();
+                        throw new Error(errorData.error || 'Falha ao atualizar os dados.');
+                    }
+
+                    window.showNotification('Dados atualizados com sucesso!');
+                    loadProfileData(); // Reload data to show changes
+                } catch (error) {
+                    console.error('Erro ao salvar alterações:', error);
+                    window.showNotification(`Falha ao salvar: ${error.message}`, 'error');
+                    // Revert button to edit state if save fails
+                    isEditMode = true; 
+                    toggleEditState();
+                }
+            }
+
+            // Initial Load
+            loadProfileData();
+            toggleEditState(); // Set initial readonly state
+        });
+    </script>
 </body>
 </html>

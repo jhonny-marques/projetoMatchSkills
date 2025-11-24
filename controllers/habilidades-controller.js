@@ -1,4 +1,5 @@
 const habilidadesModel = require ('../models/habilidades-model')
+const vagasModel = require('../models/vagas-model');
 
 const habilidadesController = {
 
@@ -177,6 +178,49 @@ const habilidadesController = {
         } catch (error) {
             console.error("Erro ao buscar habilidades por candidato:", error);
             return res.status(500).json({ error: "Erro interno no servidor ao buscar habilidades por candidato." });
+        }
+    },
+
+    buscar_todas_informacoes_habilidades_por_candidato: async(req, res) => {
+        const { id } = req.params;
+        try {
+            if (!id) {
+                return res.status(400).json({ error: "O ID do candidato é obrigatório." });
+            }
+            const habilidades = await habilidadesModel.buscar_todas_informacoes_habilidades_por_candidato(id);
+            if (habilidades) {
+                return res.status(200).json({ data: habilidades });
+            }
+            return res.status(404).json({ message: "Nenhuma habilidade encontrada para este candidato." });
+        } catch (error) {
+            console.error("Erro ao buscar todas as informações de habilidades por candidato:", error);
+            return res.status(500).json({ error: "Erro interno no servidor." });
+        }
+    },
+
+    atualizar_habilidades_vaga: async(req, res) => {
+        const { id_vaga } = req.params;
+        const { habilidades_obrigatorias, habilidades_diferenciais } = req.body;
+
+        if (!id_vaga) {
+            return res.status(400).json({ error: 'O ID da vaga é obrigatório.' });
+        }
+
+        if (!Array.isArray(habilidades_obrigatorias) || !Array.isArray(habilidades_diferenciais)) {
+            return res.status(400).json({ error: 'Os campos "habilidades_obrigatorias" e "habilidades_diferenciais" devem ser arrays.' });
+        }
+
+        try {
+            await habilidadesModel.atualizar_habilidades_vaga(id_vaga, habilidades_obrigatorias, habilidades_diferenciais);
+            await vagasModel.deletar_todas_candidaturas_para_vaga(id_vaga);
+            return res.status(200).json({ message: 'Habilidades da vaga atualizadas com sucesso.' });
+        } catch (error) {
+            console.error("Erro ao atualizar habilidades da vaga:", error);
+            // Check for foreign key constraint error
+            if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+                return res.status(400).json({ error: 'Uma ou mais IDs de habilidade fornecidas não existem.' });
+            }
+            return res.status(500).json({ error: 'Erro interno no servidor ao atualizar as habilidades da vaga.' });
         }
     }
 }
